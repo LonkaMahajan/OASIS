@@ -1,1 +1,262 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.HashMap;
+import java.util.Map;
 
+public class OnlineReservationSystem extends JFrame {
+    private CardLayout cardLayout;
+    private JPanel mainPanel;
+    private JPanel loginPanel, reservationPanel, cancellationPanel;
+    private JTextField loginUserIdField, trainNumberField, trainNameField, classTypeField, dateOfJourneyField,
+            fromField, toField, pnrField;
+    private JPasswordField loginPasswordField;
+    private JButton loginButton, reserveButton, cancelButton;
+    private Map<String, User> users;
+    private Map<String, Reservation> reservations;
+
+    public OnlineReservationSystem() {
+        // Initialize the user and reservation storage
+        users = new HashMap<>();
+        reservations = new HashMap<>();
+
+        // Sample user for login
+        users.put("lonka", new User("lonka", "lonka"));
+
+        cardLayout = new CardLayout();
+        mainPanel = new JPanel(cardLayout);
+
+        createLoginForm();
+        createReservationForm();
+        createCancellationForm();
+
+        mainPanel.add(loginPanel, "LoginForm");
+        mainPanel.add(reservationPanel, "ReservationForm");
+        mainPanel.add(cancellationPanel, "CancellationForm");
+
+        add(mainPanel);
+        cardLayout.show(mainPanel, "LoginForm");
+
+        setTitle("Online Reservation System");
+        setSize(400, 300);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+    }
+
+    private void createLoginForm() {
+        loginPanel = new JPanel(new BorderLayout());
+        JPanel formPanel = new JPanel(new GridLayout(3, 2));
+        formPanel.add(new JLabel("User ID:"));
+        loginUserIdField = new JTextField();
+        formPanel.add(loginUserIdField);
+        formPanel.add(new JLabel("Password:"));
+        loginPasswordField = new JPasswordField();
+        formPanel.add(loginPasswordField);
+        loginButton = new JButton("Login");
+        formPanel.add(new JLabel());
+        formPanel.add(loginButton);
+        loginPanel.add(formPanel, BorderLayout.CENTER);
+
+        loginButton.addActionListener(e -> {
+            String userId = loginUserIdField.getText();
+            String password = new String(loginPasswordField.getPassword());
+            if (authenticate(userId, password)) {
+                cardLayout.show(mainPanel, "ReservationForm");
+            } else {
+                JOptionPane.showMessageDialog(this, "Invalid user ID or password", "Login Failed",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+    }
+
+    private void createReservationForm() {
+        reservationPanel = new JPanel(new BorderLayout());
+        JPanel formPanel = new JPanel(new GridLayout(8, 2));
+        formPanel.add(new JLabel("Train Number:"));
+        trainNumberField = new JTextField();
+        formPanel.add(trainNumberField);
+        formPanel.add(new JLabel("Train Name:"));
+        trainNameField = new JTextField();
+        formPanel.add(trainNameField);
+        formPanel.add(new JLabel("Class Type:"));
+        classTypeField = new JTextField();
+        formPanel.add(classTypeField);
+        formPanel.add(new JLabel("Date of Journey:"));
+        dateOfJourneyField = new JTextField();
+        formPanel.add(dateOfJourneyField);
+        formPanel.add(new JLabel("From:"));
+        fromField = new JTextField();
+        formPanel.add(fromField);
+        formPanel.add(new JLabel("To:"));
+        toField = new JTextField();
+        formPanel.add(toField);
+        reserveButton = new JButton("Reserve");
+        formPanel.add(new JLabel());
+        formPanel.add(reserveButton);
+        JButton switchToCancellationButton = new JButton("Go to Cancellation");
+        formPanel.add(switchToCancellationButton);
+
+        reservationPanel.add(formPanel, BorderLayout.CENTER);
+
+        reserveButton.addActionListener(e -> {
+            String pnr = "PNR" + System.currentTimeMillis();
+            String userId = loginUserIdField.getText();
+            String trainNumber = trainNumberField.getText();
+            String trainName = trainNameField.getText();
+            String classType = classTypeField.getText();
+            String dateOfJourney = dateOfJourneyField.getText();
+            String from = fromField.getText();
+            String to = toField.getText();
+            Reservation reservation = new Reservation(pnr, userId, trainNumber, trainName, classType, dateOfJourney,
+                    from, to);
+            addReservation(reservation);
+            JOptionPane.showMessageDialog(this, "Reservation successful! PNR: " + pnr, "Success",
+                    JOptionPane.INFORMATION_MESSAGE);
+        });
+
+        switchToCancellationButton.addActionListener(e -> {
+            cardLayout.show(mainPanel, "CancellationForm");
+        });
+    }
+
+    private void createCancellationForm() {
+        cancellationPanel = new JPanel(new BorderLayout());
+        JPanel formPanel = new JPanel(new GridLayout(3, 2));
+        formPanel.add(new JLabel("PNR Number:"));
+        pnrField = new JTextField();
+        formPanel.add(pnrField);
+        cancelButton = new JButton("Cancel Reservation");
+        formPanel.add(new JLabel());
+        formPanel.add(cancelButton);
+        JButton switchToReservationButton = new JButton("Go to Reservation");
+        formPanel.add(new JLabel());
+        formPanel.add(switchToReservationButton);
+
+        cancellationPanel.add(formPanel, BorderLayout.CENTER);
+
+        cancelButton.addActionListener(e -> {
+            String pnr = pnrField.getText();
+            Reservation reservation = getReservation(pnr);
+            if (reservation != null) {
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "Reservation Details:\n" + reservation.toString() + "\nDo you want to cancel this reservation?",
+                        "Confirm Cancellation", JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    cancelReservation(pnr);
+                    JOptionPane.showMessageDialog(this, "Reservation cancelled successfully", "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "No reservation found with PNR: " + pnr, "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        switchToReservationButton.addActionListener(e -> {
+            cardLayout.show(mainPanel, "ReservationForm");
+        });
+    }
+
+    public boolean authenticate(String userId, String password) {
+        User user = users.get(userId);
+        return user != null && user.getPassword().equals(password);
+    }
+
+    public void addReservation(Reservation reservation) {
+        reservations.put(reservation.getPnr(), reservation);
+    }
+
+    public Reservation getReservation(String pnr) {
+        return reservations.get(pnr);
+    }
+
+    public void cancelReservation(String pnr) {
+        reservations.remove(pnr);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new OnlineReservationSystem().setVisible(true);
+        });
+    }
+}
+
+class User {
+    private String userId;
+    private String password;
+
+    public User(String userId, String password) {
+        this.userId = userId;
+        this.password = password;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+}
+
+class Reservation {
+    private String pnr;
+    private String userId;
+    private String trainNumber;
+    private String trainName;
+    private String classType;
+    private String dateOfJourney;
+    private String from;
+    private String to;
+
+    public Reservation(String pnr, String userId, String trainNumber, String trainName, String classType,
+            String dateOfJourney, String from, String to) {
+        this.pnr = pnr;
+        this.userId = userId;
+        this.trainNumber = trainNumber;
+        this.trainName = trainName;
+        this.classType = classType;
+        this.dateOfJourney = dateOfJourney;
+        this.from = from;
+        this.to = to;
+    }
+
+    public String getPnr() {
+        return pnr;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public String getTrainNumber() {
+        return trainNumber;
+    }
+
+    public String getTrainName() {
+        return trainName;
+    }
+
+    public String getClassType() {
+        return classType;
+    }
+
+    public String getDateOfJourney() {
+        return dateOfJourney;
+    }
+
+    public String getFrom() {
+        return from;
+    }
+
+    public String getTo() {
+        return to;
+    }
+
+    @Override
+    public String toString() {
+        return "PNR: " + pnr + "\nUser ID: " + userId + "\nTrain Number: " + trainNumber + "\nTrain Name: " + trainName
+                + "\nClass Type: " + classType + "\nDate of Journey: " + dateOfJourney + "\nFrom: " + from + "\nTo: "
+                + to;
+    }
+}
