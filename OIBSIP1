@@ -1,0 +1,59 @@
+import java.util.Random;
+import java.util.Scanner;
+
+public class GuessTheNumberGame {
+    private static final int MAX_ATTEMPTS = 10;
+    private static final int POINTS_PER_ATTEMPT = 10;
+    private static final int MAX_ROUNDS = 5;
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        Random random = new Random();
+        int totalScore = 0;
+
+        System.out.println("Welcome to Guess the Number Game!");
+        System.out.println("You have a maximum of " + MAX_ATTEMPTS + " attempts to guess the number.");
+        System.out.println("Points are awarded based on the number of attempts used.");
+
+        for (int round = 1; round <= MAX_ROUNDS; round++) {
+            System.out.println("\nRound " + round + " of " + MAX_ROUNDS);
+            int numberToGuess = random.nextInt(100) + 1;
+            System.out.println("DEBUG: The number to guess is " + numberToGuess); // Debugging line
+            int attempts = 0;
+            boolean guessedCorrectly = false;
+
+            while (attempts < MAX_ATTEMPTS && !guessedCorrectly) {
+                attempts++;
+                System.out.print("Attempt " + attempts + ": Enter your guess (1-100): ");
+                int userGuess = scanner.nextInt();
+
+                if (userGuess < 1 || userGuess > 100) {
+                    System.out.println("Please enter a number between 1 and 100.");
+                    attempts--; // Do not count this as a valid attempt
+                    continue;
+                }
+
+                if (userGuess == numberToGuess) {
+                    guessedCorrectly = true;
+                    int points = (MAX_ATTEMPTS - attempts + 1) * POINTS_PER_ATTEMPT;
+                    totalScore += points;
+                    System.out.println("Congratulations! You guessed the number in " + attempts + " attempts.");
+                    System.out.println("You earned " + points + " points this round.");
+                } else if (userGuess < numberToGuess) {
+                    System.out.println("The number is lower than your guess.");
+                } else {
+                    System.out.println("The number is higher than your guess.");
+                }
+            }
+
+            if (!guessedCorrectly) {
+                System.out.println("Sorry! You've used all your attempts. The number was: " + numberToGuess);
+            }
+
+            System.out.println("Your total score after round " + round + " is: " + totalScore);
+        }
+
+        System.out.println("\nGame over! Your final score is: " + totalScore);
+        scanner.close();
+    }
+}
